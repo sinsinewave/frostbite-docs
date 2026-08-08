@@ -104,3 +104,24 @@ code {
     padding-left: 4px;
     padding-right: 4px;
 }
+
+.navlink {
+    text-decoration: none;
+    border: 1px solid grey;
+    border-radius: 5px;
+    position: relative;
+    display: block;
+    padding: 10px;
+    color: #eeeeee;
+    transition: all .25s;
+    background: #0a0a0f;
+}
+.navlink:hover {
+    border-color: white;
+}
+.navlink:before {
+    content: ">> ";
+}
+.navlink.back:before {
+    content: "<< ";
+}
