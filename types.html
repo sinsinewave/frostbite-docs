@@ -1,0 +1,183 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body><div id="root">
+        <div>
+            <h2>Frostbite Engine's EBX Type System</h2>
+            <p>
+            the Frostbite engine EBX asset node structure relies on a slightly convoluted type system reminiscent of object-oriented languages, such as C# in which EA DICE's internal Frostbite tooling appears to be written
+            </p>
+            Each EBX node has a type which is split into three main parts:
+            <ul>
+            <li>the outer type, also known as the category</li>
+            <li>the inner type, also known as the type or base type</li>
+            <li>the type descriptor, in the case of custom data types</li>
+            </ul>
+            <p>
+            of these, outer and inner types are hardcoded into the engine, while the type descriptors are usually loaded from a shared type descriptor table, in many games found in the <code>initfs</code> file
+            </p>
+            <p>
+            note that this article only describes the type <em>system</em> and not individual types. it also only covers the RIFF-based binary EBX format used in Frostbite 4 (or simply Frostbite, officially). it may or may not apply to older versions, however brief research suggests that the inner/outer type 
+            system is largely a Frostbite 4 thing specifically
+            </p>
+        </div>
+        <div>
+            <h2>Built-in Types</h2>
+            <p>
+            the inner and outer types together make up frostbite's built-in types, and are also known as the type and category, depending on who you ask. the latter terminology is more common, as the popular modding tool <a href="https://github.com/HarGabt/FrostyToolsuite/tree/1.0.7">Frosty Toolsuite</a> uses those terms, 
+            while the former was made up by yours truly after getting annoyed at the confusion between type (inner type) and type (the entire type). in fact even the category is more so a type than a category in practice
+            </p>
+            <h3>Outer Types</h3>
+            <p>
+            outer types can be described as modeling a wrapper type taking in an inner type as a generic type parameter. for example, an array of integer values has an outer type of <code>Array</code> and an inner type of <code>Int</code>, and could thus be written as <code>Array&ltInt&gt</code>,
+            something likely familiar to anyone who has worked in programming languages such as Java or C# before
+            </p>
+            as every EBX type is required to have both an inner and outer type, some outer types act as simple wrapper for inner types to specify that the type is free-standing an not in a container such as an array. these appear to include <code>Struct</code>, <code>Enum</code>, and <code>Delegate</code>. <code>Primitive</code>
+            is also used similarly, however it can wrap any of the primitive inner types
+            <br>
+            <h3>Inner Types</h3>
+            <p>
+            inner types describe what kind of value is actually contained, and include the likes of primitives such as integers, strings, or UUIDs. they are the most similar to types as they are known in almost all programming languages
+            </p>
+            <div class="callout">Frostbite considers some unexpected types such as UUIDs and SHA-1 hashes as primitives</div>
+            <p>
+            while most inner types indicate that a specific type of value is stored, <code>Struct</code> and <code>Inherited</code> are notable special cases. these essentially act as placeholders for a custom type as defined by a type descriptor rather than some fixed value, and contain no data directly of their own.
+            both are functionally the same as far as parsing binary EBX is concerned, however structs have a specific byte alignment which must be accounted for. they are also presumably treated as value types by the engine
+            </p>
+            <details><summary>Inner Type Enum</summary><div>
+            <div class="callout">the sizes are for the data stored inline in the EBX structure, for example CString stores a 64-bit integer offset while the string itself is written to a table after the EBX structure itself</div>
+            <table>
+                <tr><th>Name</th><th>Size</th><th>Alignment</th><th>Description</th></tr>
+                <tr>           <td>Inherited</td>  <td><i>varies</i></td>  <td><i>varies</i></td>  <td>custom type, only used in field descriptors</td> </tr>
+                <tr>           <td>DBObject</td>   <td><i>unknown</i></td> <td><i>unknown</i></td> <td>dbobject, a structured data format. possibly unused</td> </tr>
+                <tr>           <td>Struct</td>     <td><i>varies</i></td>  <td><i>varies</i></td>  <td>struct as found in for example C#</td> </tr>
+                <tr> <td rowspan=2>Class</td>      <td><i>varies</i></td>  <td><i>varies</i></td>  <td>type descriptor only, simple class definition</td> </tr>
+                <tr>                               <td>8</td>              <td>8</td>              <td>field descriptor only, reference to an EBX instance</td> </tr>
+                <tr>           <td>Array</td>      <td><i>unknown</i></td> <td><i>unknown</i></td>  <td>an array, seems to be unused as an inner type in RIFF-based EBX</td> </tr>
+                <tr>           <td>FixedArray</td> <td><i>unknown</i></td> <td><i>unknown</i></td> <td>unknown, possibly a fixed-length array?</td> </tr>
+                <tr>           <td>String</td>     <td>32</td>             <td>4</td>              <td>32-character fixed length string</td> </tr>
+                <tr>           <td>CString</td>    <td>8</td>              <td>8</td>              <td>variable length string</td> </tr>
+                <tr>           <td>Enum</td>       <td>4</td>              <td>4</td>              <td>enum entry stored as a 32-bit integer</td> </tr>
+                <tr>           <td>FileReference</td> <td>8</td>           <td>8</td>              <td>reference to a file, stored identically to a CString</td> </tr>
+                <tr>           <td>Boolean</td>    <td>1</td>              <td>4</td>              <td>simple boolean value</td> </tr>
+                <tr>           <td>Byte</td>       <td>1</td>              <td>4</td>              <td>8-bit signed integer</td> </tr>
+                <tr>           <td>UByte</td>      <td>1</td>              <td>4</td>              <td>8-bit unsigned integer</td> </tr>
+                <tr>           <td>Short</td>      <td>2</td>              <td>4</td>              <td>16-bit signed integer</td> </tr>
+                <tr>           <td>UShort</td>     <td>2</td>              <td>4</td>              <td>16-bit unsigned integer</td> </tr>
+                <tr>           <td>Int</td>        <td>4</td>              <td>4</td>              <td>32-bit signed integer</td> </tr>
+                <tr>           <td>UInt</td>       <td>4</td>              <td>4</td>              <td>32-bit unsigned integer</td> </tr>
+                <tr>           <td>Long</td>       <td>8</td>              <td>8</td>              <td>64-bit signed integer</td> </tr>
+                <tr>           <td>ULong</td>      <td>8</td>              <td>8</td>              <td>64-bit unsigned integer</td> </tr>
+                <tr>           <td>Float</td>      <td>4</td>              <td>4</td>              <td>32-bit IEEE-745 float</td> </tr>
+                <tr>           <td>Double</td>     <td>8</td>              <td>8</td>              <td>64-bit IEEE-745 double-precision float</td> </tr>
+                <tr>           <td>Uuid</td>       <td>16</td>             <td>4</td>              <td>16-byte UUID</td> </tr>
+                <tr>           <td>Sha1</td>       <td>20</td>             <td>4</td>              <td>20-byte SHA-1 hash</td> </tr>
+                <tr>           <td>ResourceReference</td> <td>8</td>       <td>8</td>              <td>reference to a resource (a game asset)</td> </tr>
+                <tr>           <td>Function</td>   <td><i>unknown</i></td> <td><i>unknown</i></td> <td>unknown, possibly a function pointer of some kind?</td> </tr>
+                <tr>           <td>TypeReference</td> <td>8</td>           <td>8</td>              <td>reference to an EBX type</td> </tr>
+                <tr>           <td>BoxedValueReference</td> <td>8</td>     <td>8</td>              <td>reference to a boxed value</td> </tr>
+                <tr>           <td>Interface</td>  <td><i>unknown</i></td> <td><i>unknown</i></td> <td><i>unknown</i></td> </tr>
+                <tr>           <td>Delegate</td>   <td>8</td>              <td>8</td>              <td>same as TypeReference, likely treated differently by the engine however</td> </tr>
+            </table>
+            </div></details>
+            <br>
+            <details><summary>Outer Type Enum</summary><div>
+            <br>
+            <table>
+                <tr><th>Name</th><th>Description</th></tr>
+                <tr> <td>None</td>      <td>appears to only be used in field descriptors with inner type <code>Inherited</code></td> </tr>
+                <tr> <td>Class</td>     <td>wraps both <code>Class</code> and <code>Inherited</code> inner types in field descriptors, only <code>Class</code> in type descriptors</td> </tr>
+                <tr> <td>Struct</td>    <td>wraps inner type <code>Struct</code> when not in a container such as an array</td> </tr>
+                <tr> <td>Primitive</td> <td>wraps primitives when not in a container such as an array</td> </tr>
+                <tr> <td>Array</td>     <td>an array of the inner type</td> </tr>
+                <tr> <td>Enum</td>      <td>wraps inner type <code>Enum</code> when not in a container such as an array</td> </tr>
+                <tr> <td>Function</td>  <td><i>unknown</i></td> </tr>
+                <tr> <td>Interface</td> <td><i>unknown</i></td> </tr>
+                <tr> <td>Delegate</td>  <td>wraps inner type <code>Delegate</code> when not in a container such as an array</td> </tr>
+            </table>
+            </div></details>
+        </div>
+        <div>
+            <h2>Shared Type Descriptor Table</h2>
+            <p>
+            the shared type descriptor table, as mentioned near the beginning of this article, is what actually holds the definitions for a given Frostbite game's custom types, that largely being classes and structs
+            </p>
+            <p>
+            this table can be roughly split into three parts: the type signature table, the type descriptor table, and the field descriptor table. technically it also contains two or three other tables, however their purposes are unknown, and therefore they will be ignored
+            </p>
+            <h3>Type Signature Table</h3>
+            <p>
+            the type signature table is the simplest of the three main tables, containing a 20-byte structure consisting of an UUID and an integer. the UUID is used to refer to types externally, while the purpose of the integer is unknown. the indexing of this table is also identical 
+            to the type descriptor table, wherein for example the signature at index 413 maps to the descriptor at index 413
+            </p>
+            <h3>Type Descriptor Table</h3>
+            <p>
+            the type descriptor table, to which the signature table is essentially a companion, contains the actual definitions for each of a game's custom types in 16-byte structures as follows
+            </p>
+            <div class="callout">the specific bit widths in the <code>type</code> bitfield vary by Frostbite version, however the basic structure remains the same. these ones are used in <i>Need for Speed: Unbound</i>, running a 2021 variant</div>
+            <div class="round"><table>
+                <tr><th>Type</th><th>Name</th><th>Description</th></tr>
+                <tr> <td>uint</td>    <td>id</td>         <td>type ID</td> </tr>
+                <tr> <td>uint</td>    <td>fieldIndex</td> <td>index of first type field</td> </tr>
+                <tr> <td>ushort</td>  <td>fieldCount</td> <td>number of type fields</td> </tr>
+                <tr> <td>16 bits</td> <td>type</td>       <td><div class="round"><table>
+                    <tr> <td>1 bit</td>  <td><i>unknown</i></td> <td><i>unknown</i></td> </tr>
+                    <tr> <td>4 bits</td> <td>outerType</td>      <td>enum index for the outer type</td> </tr>
+                    <tr> <td>5 bits</td> <td>innerType</td>      <td>enum index for the inner type</td> </tr>
+                    <tr> <td>6 bits</td> <td>flags</td>          <td>flags presumably used for EBX property connections</td> </tr>
+                </table></div></td></tr>
+                <tr> <td>ushort</td>  <td>size</td>       <td>size of type instances in bytes</td> </tr>
+                <tr> <td>ushort</td>  <td>alignment</td>  <td>byte alignment of type</td> </tr>
+            </table></div>
+            <p>
+            of these <code>id</code> is simply a replacement for a class name, and if one were to have access to the string table for example from a memory dump of the game, the IDs could be mapped to person-friendly names
+            </p>
+            <p>
+            for parsing an EBX tree the <code>fieldIndex</code> and <code>fieldCount</code> values are most important. <code>fieldIndex</code> points to an index of the field descriptor table, where the descriptor for the first field of this type can be read, and <code>fieldCount</code>indicates 
+            how many field the type has. all fields are in order, so for example if you were to have <code>fieldIndex</code> 612 and <code>fieldCount</code> 11, you would want to read fields at indices 612..622, inclusive
+            </p>
+            <p>
+            the size and alignment are relatively straightforward, as is the type. in fact, the inner and outer type of type descriptors are needed relatively little in parsing EBX, and the equivalent bitfield in field descriptors is far more important
+            </p>
+            <h3>Field Descriptor Table</h3>
+            <p>
+            the field descriptor table is a table of somewhat similar structures to the type descriptors, describing the aforementioned fields instead of types. in object-oriented programming terms for those familiar, these are essentially declarations for a type's member variables. field descriptors may
+            also refer to both custom and builtin types
+            </p>
+            <p>
+            the field descriptor structure is as follows
+            </p>
+            <div class="round"><table>
+                <tr><th>Type</th><th>Name</th><th>Description</th></tr>
+                <tr> <td>uint</td>    <td>id</td>         <td>type ID</td> </tr>
+                <tr> <td>uint</td>    <td>dataOffset</td> <td>offset of field data from previous node</td> </tr>
+                <tr> <td>16 bits</td> <td>type</td>       <td><div class="round"><table>
+                    <tr> <td>1 bit</td>  <td><i>unknown</i></td> <td><i>unknown</i></td> </tr>
+                    <tr> <td>4 bits</td> <td>outerType</td>      <td>enum index for the outer type</td> </tr>
+                    <tr> <td>5 bits</td> <td>innerType</td>      <td>enum index for the inner type</td> </tr>
+                    <tr> <td>6 bits</td> <td>flags</td>          <td>flags presumably used for EBX property connections</td> </tr>
+                </table></div></td></tr>
+                <tr> <td>ushort</td>  <td>typeIndex</td>  <td>index of the field's corresponding type descriptor where applicable</td> </tr>
+            </table></div>
+            <p>
+            <code>id</code> and <code>type</code> are as described in the type descriptor section, and will not be covered here. of the remaining values, <code>dataOffset</code> is essentially an offset in bytes from the end of the previous node in binary EBX. why this is necessary is beyond me, but 
+            so are a lot of other things regarding Frostbite's pecularities
+            </p>
+            <p>
+            <code>typeIndex</code> on the other hand is simply an index into the type descriptor table, used on fields of a custom type. note that on builtin types it is set to <code>0xFFFF</code> (65535, or -1 if read as signed), acting as a pseudo-null-pointer, and the inner and outer types are used instead
+            </p>
+        </div>
+        <div>
+            <h2>Credits & Sources</h2>
+            <p>
+            The information in this document was gathered from my own research (i have spent so many hours staring at a screen full of hexadecimal recently), as well as the source codes of the following projects. there may also be some smaller sources i am not remembering, but these are the major ones
+            <ul>
+                <li><a href="https://github.com/FrostyToolsuite/FrostyToolsuite">Frosty Toolsuite</a>'s unfinished rewrite</li>
+                <li><a href="https://github.com/pookatv/InitfsTools/">InitfsTools</a> by pookatv</li>
+                <li><a href="https://github.com/NicknineTheEagle/Frostbite-Scripts">Frostbite-Scripts</a> by NicknineTheEagle</li>
+            </ul>
+    </div>
+    <footer>sinsinewave 2026</footer>
+    </body>
+</html>

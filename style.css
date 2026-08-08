@@ -1,0 +1,106 @@
+html {
+    margin:    auto;
+    max-width: max-content;
+}
+
+* {
+    font-family: monospace;
+    font-size  : 12pt;
+}
+
+body {
+    background: #131518;
+    color     : #eeeeee;
+    text-align: center;
+}
+
+#root {
+    max-width : 900px;
+    text-align: left;
+
+    > div {
+        border-radius: 5px;
+        border       : 1px solid white;
+        margin-top   : 20px;
+        margin-bottom: 20px;
+        padding      : 20px;
+        padding-top  : 0px;
+        background   : #0a0a0f;
+    }
+}
+
+a {
+    color: #ff355e;
+}
+
+details {
+    border-radius : 5px;
+    border        : 1px solid grey;
+    > summary {
+        cursor: pointer;
+        padding: 10px;
+    }
+    transition: all .25s;
+    > div {
+        padding    : 20px;
+        padding-top: 0px;
+        border-top : 1px solid grey;
+    }
+}
+details:hover {
+    border-color: white;
+}
+
+h2 {
+    font-size   : 16pt;
+    text-align  : center;
+    background  : #eeeeee;
+    color       : black;
+    margin      : 0px;
+    margin-left : -20px;
+    margin-right: -20px;
+}
+
+h3 {
+    padding-bottom : 5px;
+    border-bottom: 1px solid #3a3a3f;
+}
+
+div.callout {
+    border-radius : 5px;
+    border        : 1px solid grey;
+    border-left   : 10px solid grey;
+    padding       : 10px;
+    margin-top    : 20px;
+    margin-bottom : 20px;
+    background    : black;
+}
+
+table {
+    background: grey;
+    border-spacing: 1px;
+    border-radius: 5px;
+    tr:first-child > :first-child { border-top-left-radius:     5px; }
+    tr:first-child > :last-child  { border-top-right-radius:    5px; }
+    tr:last-child  > :first-child { border-bottom-left-radius:  5px; }
+    tr:last-child  > :last-child  { border-bottom-right-radius: 5px; }
+    td, th {
+        padding-left: 5px;
+        padding-right: 5px;
+        background: #0a0a0f;
+    }
+    table {
+        margin-top   : 5px;
+        margin-bottom: 5px;
+    }
+}
+
+code {
+    background: #33353a;
+    color: #c1f07c;
+    border-radius: 6pt;
+    font-size: 11pt;
+    padding: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
